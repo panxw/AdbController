@@ -4,7 +4,7 @@ import os
 import tkinter as tk
 from tkinter import messagebox
 
-#pyinstaller -F  .\AdbShell.py， 将生成exe文件
+#pyinstaller -F  .\AdbController.py， 将生成exe文件
 #tkinter 打包成exe可执行文件
 #https://www.jianshu.com/p/bf592bd0a034
 
@@ -19,27 +19,38 @@ iptextvar.set('172.16.13.106')
 resptextvar=tk.Variable()
 resptextvar.set('...')
 
+isConnected = False
+
 def exeCmdKey(key):
+    if  isConnected!=True:
+        resptextvar.set('未链接!')
+        return
     cmdl = ['adb shell input keyevent ', key]
     cmdStr = ''.join(cmdl)
     print(cmdStr)
     rt = os.popen(cmdStr).read()
     print(rt)
-    resptextvar.set('cmd send!')
+    resptextvar.set('命令已发送!')
     
 def exeCmd(cmdStr):
+    if  isConnected!=True:
+        resptextvar.set('未链接!')
+        return
     print(cmdStr)
     rt = os.popen(cmdStr).read()
     print(rt)
-    resptextvar.set(rt)
+    resptextvar.set('命令已发送!')
     
 def exeAction(action):
+    if  isConnected!=True:
+        resptextvar.set('未链接!')
+        return
     cmdl = ['adb shell am start -a ', action]
     cmdStr = ''.join(cmdl)
     print(cmdStr)
     rt = os.popen(cmdStr).read()
     print(rt)
-    resptextvar.set('cmd send!')
+    resptextvar.set('命令已发送!')
     
 def execConnect():
     cmdl = ['adb connect ', iptextvar.get()]
@@ -47,18 +58,42 @@ def execConnect():
     print(cmdStr)
     rt = os.popen(cmdStr).read()
     print(rt)
+    
+    global isConnected
     if rt.startswith('connected') or rt.startswith('already connected'):
-        resptextvar.set('connected!')
+        resptextvar.set('已链接成功!')
+        isConnected=True
+        connect['fg']='green'
     else:
-        resptextvar.set('cmd error!')
+        resptextvar.set('执行异常!')
+        isConnected=False
+        connect['fg']='black'
 
 def execDisConnect():
+    global isConnected
+    print(isConnected)
+    if  isConnected!=True:
+        resptextvar.set('未链接!')
+        return
+   
     rt = os.popen('adb disconnect').read()
     print(rt)
-    if rt.startswith('disconnected!'):
-        resptextvar.set('disconnected!')
+    if rt.startswith('disconnected'):
+        resptextvar.set('已断开!')
     else:
-        resptextvar.set('cmd error!')
+        resptextvar.set('执行异常!')
+   
+    isConnected=False
+    connect['fg']='black'
+
+def execRebootCmd():
+    if  isConnected!=True:
+        resptextvar.set('未链接!')
+        return
+    cmdStr='adb reboot'
+    print(cmdStr)
+    resptextvar.set('正在重启...')
+    os.popen(cmdStr).read()
 
 
 header= tk.Frame(root)
@@ -96,10 +131,10 @@ connect.pack(side='left')
 addr.pack(side='top')
 
 funs=tk.Frame(root)
-reboot=tk.Button(funs, text ="重启", command = lambda:exeCmd('adb reboot'))
-reboot.pack(side='right')
 disconnect = tk.Button(funs,text="断开",command=lambda:execDisConnect())
 disconnect.pack(side='right')
+reboot=tk.Button(funs, text ="重启", command = lambda:execRebootCmd())
+reboot.pack(side='right')
 funs.pack(side='top')
 
 more=tk.Frame(root)
@@ -113,8 +148,18 @@ favor=tk.Button(more, text ="收藏", command =lambda: exeAction('bestv.ott.acti
 favor.grid(row=0, column=3)
 more.pack(side='top')
 
+volumn=tk.Frame(root)
+mute=tk.Button(volumn, text ="mute", command =lambda:exeCmdKey('164'))
+mute.pack(side='left')
+zhibo=tk.Button(volumn, text ="vol+", command =lambda:exeCmdKey('24'))
+zhibo.pack(side='left')
+dianbo=tk.Button(volumn, text ="vol-", command = lambda:exeCmdKey('25'))
+dianbo.pack(side='left')
+volumn.pack(side='top')
+
+
 alertinfo=tk.Frame(root)
-informtext=ip = tk.Label(alertinfo,textvariable=resptextvar)
+informtext=ip = tk.Label(alertinfo,textvariable=resptextvar,fg='gray')
 informtext.pack(side='left')
 alertinfo.pack(side='top')
 
